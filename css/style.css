@@ -104,6 +104,11 @@ section:last-of-type { border-bottom: none; }
   align-items: center;
 }
 
+.nav-links > li {
+  display: flex;
+  align-items: center;
+}
+
 .nav-links a {
   font-size: 0.78rem;
   font-weight: 600;
