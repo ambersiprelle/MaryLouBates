@@ -7,7 +7,17 @@ if (toggle && navLinks) {
 }
 
 document.querySelectorAll('.nav-links a').forEach(link => {
-  link.addEventListener('click', () => navLinks.classList.remove('open'));
+  if (!link.classList.contains('nav-dropdown-toggle')) {
+    link.addEventListener('click', () => navLinks.classList.remove('open'));
+  }
+});
+
+// Dropdown toggle (mobile tap)
+document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    btn.closest('.nav-dropdown').classList.toggle('open');
+  });
 });
 
 // Highlight active page
