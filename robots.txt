@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://ambersiprelle.github.io/MaryLouBates/sitemap.xml
