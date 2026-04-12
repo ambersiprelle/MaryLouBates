@@ -7,9 +7,10 @@ Personal/author site for Mary Lou Bates — rose enthusiast, former Antarctic re
 ---
 
 ## Tech Stack
-- Plain HTML5, CSS3, vanilla JavaScript — no frameworks or build tools
-- Served by `nginx:alpine` on Fly.io (personal org, iad region)
+- F# Falco 5.1 / .NET 8 serving static files from `wwwroot/`
+- Hosted on Fly.io (personal org, iad region)
 - Fonts: Google Fonts (League Spartan + Poppins)
+- Falco chosen over pure nginx so the contact form and newsletter signup can be wired to a real backend without a platform migration
 
 ## Structure
 ```
@@ -21,7 +22,8 @@ wwwroot/          all public assets served by nginx
   css/, js/, images/
   robots.txt      allows all, points at sitemap
   sitemap.xml     4 URLs, lastmod 2026-04-12
-Dockerfile        4-line nginx:alpine copy
+Dockerfile        multi-stage .NET 8 build
+src/ProductSite/  F# Falco app (Program.fs, Configuration.fs, Handlers.fs)
 fly.toml          Fly.io app config
 ```
 

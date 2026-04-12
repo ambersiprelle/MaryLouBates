@@ -8,7 +8,7 @@ Personal/bio site for Mary Lou Bates — author, rose enthusiast, Antarctic memo
 
 ## Key Details
 - **Branch:** main
-- **Stack:** Pure static HTML/CSS/JS, served by `nginx:alpine`
+- **Stack:** F# Falco 5.1 / .NET 8, serving static files from `wwwroot/` (contact form + newsletter backend planned)
 - **Deploy:** `fly deploy` (direct, no CI)
 - **Fly org:** personal
 - **Region:** iad
