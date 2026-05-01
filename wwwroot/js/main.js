@@ -29,11 +29,15 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   }
 });
 
-// Contact form
-const form = document.querySelector('.contact-form form');
-if (form) {
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    form.innerHTML = '<p style="color:var(--coral);font-size:1.1rem;font-weight:600;">Thank you! I\'ll be in touch soon.</p>';
-  });
+// Contact form — server handles POST /contact and redirects with ?contact=ok or ?contact=err
+const params = new URLSearchParams(location.search);
+const contactStatus = params.get('contact');
+const formEl = document.querySelector('.contact-form form');
+if (formEl && contactStatus === 'ok') {
+  formEl.outerHTML = '<p style="color:var(--coral);font-size:1.1rem;font-weight:600;">Thank you! I\'ll be in touch soon.</p>';
+} else if (formEl && contactStatus === 'err') {
+  const note = document.createElement('p');
+  note.style.cssText = 'color:#c00;font-size:0.95rem;margin-bottom:0.75rem;';
+  note.textContent = 'Sorry, something went wrong sending your message. Please try again.';
+  formEl.parentNode.insertBefore(note, formEl);
 }

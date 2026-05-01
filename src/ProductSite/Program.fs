@@ -21,6 +21,7 @@ let main args =
     let endpoints =
         [
             get "/health" healthCheck
+            post "/contact" (contactHandler config)
         ]
 
     app.UseFalco(endpoints) |> ignore
