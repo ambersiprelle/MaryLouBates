@@ -22,7 +22,8 @@ Full sweep done: robots.txt, sitemap.xml (4 URLs), OG + Twitter tags, canonicals
 - Custom domain `maryloubates.com` is live (Fly certs issued for apex + www); Resend domain verified 10/23 (key + domain in Amber's Resend account); every email sent is listed at resend.com/emails
 - Contact form: `POST /contact` → Resend email to CONTACT_TO_EMAIL (marybatesroses@gmail.com)
 - **Book news signup** (`#news` on the homepage), single step (Amber 10/23: no confirmation email):
-  - `POST /subscribe` adds the reader as confirmed in SQLite (`/data/mlb.db`, Fly volume `mlb_data`) and emails Mary Lou "New reader signed up"
+  - `POST /subscribe` adds the reader as confirmed in SQLite (`/data/mlb.db`, Fly volume `mlb_data`) and emails Mary Lou "New reader signed up"; the reader gets a welcome email (link to the 2009 article + unsubscribe)
+  - Contact form senders get a "Thank you for your note" auto-reply with the same article link (reply-to = Mary Lou)
   - `GET /subscribe/confirm?t=` only honours confirm links sent during the brief double opt-in version
   - `GET /unsubscribe?t=` one-click unsubscribe — put this link (per-subscriber token) in every news email
   - `GET /admin/subscribers.csv` — basic auth `admin` / `ADMIN_PASSWORD` secret; 404 until that secret is set

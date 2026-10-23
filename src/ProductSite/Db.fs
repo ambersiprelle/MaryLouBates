@@ -39,6 +39,11 @@ let init (dbPath: string) =
         );
     """
     cmd.ExecuteNonQuery() |> ignore
+    // Signup is single step now; anyone left waiting from the brief double opt-in version is on the list.
+    use migrate = conn.CreateCommand()
+    migrate.CommandText <- "UPDATE subscribers SET status = 'confirmed', confirmed_at = created_at WHERE status = 'pending'"
+    let moved = migrate.ExecuteNonQuery()
+    if moved > 0 then printfn "[Db] Moved %d pending signups onto the list" moved
     printfn "[Db] Initialized at %s" dbPath
 
 let private openConn () =
@@ -52,8 +57,9 @@ let private newToken () =
     Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant()
 
 /// Add a signup straight onto the list (no confirmation step). Returns true when the
-/// address was not already subscribed, so the caller knows whether to notify Mary Lou.
-let subscribe (email: string) (name: string) (source: string) : bool =
+/// address was not already subscribed (so the caller knows whether to send the welcome
+/// and notify Mary Lou), plus the subscriber's unsubscribe token.
+let subscribe (email: string) (name: string) (source: string) : bool * string =
     use conn = openConn ()
     use check = conn.CreateCommand()
     check.CommandText <- "SELECT status FROM subscribers WHERE email = $email"
@@ -77,7 +83,10 @@ let subscribe (email: string) (name: string) (source: string) : bool =
     cmd.Parameters.AddWithValue("$source", source) |> ignore
     cmd.Parameters.AddWithValue("$now", now ()) |> ignore
     cmd.ExecuteNonQuery() |> ignore
-    not wasConfirmed
+    use tok = conn.CreateCommand()
+    tok.CommandText <- "SELECT token FROM subscribers WHERE email = $email"
+    tok.Parameters.AddWithValue("$email", email.Trim().ToLowerInvariant()) |> ignore
+    (not wasConfirmed, string (tok.ExecuteScalar()))
 
 /// Set a subscriber's status by token. Returns their (email, name) if the token matched.
 let private setStatus (token: string) (status: string) : (string * string) option =

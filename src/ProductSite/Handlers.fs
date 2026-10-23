@@ -76,6 +76,47 @@ let private redirectTo (location: string) (ctx: HttpContext) : Task =
     ctx.Response.Headers.Append("Location", location)
     Task.CompletedTask
 
+let private isPlausibleEmail (email: string) =
+    let e = email.Trim()
+    e.Length <= 254 && e.Contains("@") && e.LastIndexOf('.') > e.IndexOf('@') && not (e.Contains(" "))
+
+let private emailShell (inner: string) =
+    sprintf "<div style=\"font-family:Georgia,serif;font-size:16px;line-height:1.6;color:#333;max-width:560px;\">%s</div>" inner
+
+/// The article every auto-reply points readers to.
+let private articleLink (config: ProductConfig) =
+    sprintf "<p>While you wait, here is one of my published stories from the <em>American Rose Annual</em>:</p><p><a href=\"%s/2009-american-rose-annual.html\" style=\"display:inline-block;background:#ffa6a6;color:#000;font-weight:bold;padding:10px 20px;border-radius:4px;text-decoration:none;\">Read &ldquo;Mam-Maw Sarah&rsquo;s Yellow Roses&rdquo;</a></p>" config.SiteUrl
+
+let private greetingFor (name: string) =
+    if String.IsNullOrWhiteSpace name then "Hello," else sprintf "Hello %s," (htmlEncode (name.Trim()))
+
+/// Welcome email sent the moment someone joins the book news list.
+let private sendWelcome (config: ProductConfig) (email: string) (name: string) (token: string) =
+    task {
+        let unsub = sprintf "%s/unsubscribe?t=%s" config.SiteUrl token
+        let html =
+            emailShell (
+                sprintf "<p>%s</p><p>Thank you for signing up. I am writing a memoir about the four seasons I spent in Antarctica with my husband Michael &mdash; he promised me a rose garden if I would follow him to the ice.</p><p>I'll write when there's news about the book: a sneak peek, the cover, and the day you can buy it.</p>%s<p>Mary Lou</p><p style=\"font-size:12px;color:#888;\">You're getting this because you signed up for book news at maryloubates.com. <a href=\"%s\" style=\"color:#888;\">Unsubscribe</a></p>"
+                    (greetingFor name) (articleLink config) unsub)
+        let! result = sendEmail config email config.ContactToEmail "Thank you for following my book" html
+        match result with
+        | Error err -> eprintfn "[subscribe] welcome failed for %s: %s" email err
+        | Ok () -> ()
+    }
+
+/// Auto-reply to someone who sent a message through the contact form.
+let private sendContactAutoReply (config: ProductConfig) (email: string) (name: string) =
+    task {
+        let html =
+            emailShell (
+                sprintf "<p>%s</p><p>Thank you for writing. Your message reached me, and I'll reply as soon as I can.</p>%s<p>Mary Lou</p><p style=\"font-size:12px;color:#888;\">You're getting this because you sent a message through maryloubates.com.</p>"
+                    (greetingFor name) (articleLink config))
+        let! result = sendEmail config email config.ContactToEmail "Thank you for your note" html
+        match result with
+        | Error err -> eprintfn "[contact] auto-reply failed for %s: %s" email err
+        | Ok () -> ()
+    }
+
 let contactHandler (config: ProductConfig) : HttpHandler =
     fun ctx ->
         task {
@@ -93,18 +134,12 @@ let contactHandler (config: ProductConfig) : HttpHandler =
                 let! result = sendViaResend config name email message
                 match result with
                 | Ok () ->
+                    if isPlausibleEmail email then do! sendContactAutoReply config (email.Trim()) name
                     return! redirectTo "/?contact=ok#contact" ctx
                 | Error err ->
                     eprintfn "[contact] send failed: %s" err
                     return! redirectTo "/?contact=err#contact" ctx
         }
-
-let private isPlausibleEmail (email: string) =
-    let e = email.Trim()
-    e.Length <= 254 && e.Contains("@") && e.LastIndexOf('.') > e.IndexOf('@') && not (e.Contains(" "))
-
-let private emailShell (inner: string) =
-    sprintf "<div style=\"font-family:Georgia,serif;font-size:16px;line-height:1.6;color:#333;max-width:560px;\">%s</div>" inner
 
 let private notifyNewReader (config: ProductConfig) (email: string) (name: string) =
     task {
@@ -133,8 +168,10 @@ let subscribeHandler (config: ProductConfig) : HttpHandler =
             elif not (isPlausibleEmail email) then
                 return! redirectTo "/?news=err#news" ctx
             else
-                if Db.subscribe email name source then
+                let isNew, token = Db.subscribe email name source
+                if isNew then
                     printfn "[subscribe] added %s (source: %s)" email source
+                    do! sendWelcome config email name token
                     do! notifyNewReader config email name
                     return! redirectTo "/?news=confirmed#news" ctx
                 else
