@@ -10,6 +10,7 @@ open ChiAha.ProductSite.Handlers
 let main args =
     let config = loadConfig ()
     printConfigStatus config
+    Db.init config.DbPath
 
     let builder = WebApplication.CreateBuilder(args)
     let app = builder.Build()
@@ -22,6 +23,10 @@ let main args =
         [
             get "/health" healthCheck
             post "/contact" (contactHandler config)
+            post "/subscribe" (subscribeHandler config)
+            get "/subscribe/confirm" (confirmHandler config)
+            get "/unsubscribe" unsubscribeHandler
+            get "/admin/subscribers.csv" (subscribersCsvHandler config)
         ]
 
     app.UseFalco(endpoints) |> ignore

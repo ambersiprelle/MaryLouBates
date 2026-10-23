@@ -7,6 +7,9 @@ type ProductConfig = {
     ResendApiKey: string
     ContactToEmail: string
     ContactFromEmail: string
+    SiteUrl: string
+    DbPath: string
+    AdminPassword: string
 }
 
 let private getEnv key fallback =
@@ -20,6 +23,9 @@ let loadConfig () =
         ResendApiKey = getEnv "RESEND_API_KEY" ""
         ContactToEmail = getEnv "CONTACT_TO_EMAIL" "marybatesroses@gmail.com"
         ContactFromEmail = getEnv "CONTACT_FROM_EMAIL" "onboarding@resend.dev"
+        SiteUrl = (getEnv "SITE_URL" "https://maryloubates.com").TrimEnd('/')
+        DbPath = getEnv "DB_PATH" "/data/mlb.db"
+        AdminPassword = getEnv "ADMIN_PASSWORD" ""
     }
 
 let printConfigStatus (config: ProductConfig) =

@@ -426,6 +426,50 @@ section:last-of-type { border-bottom: none; }
   color: var(--coral);
 }
 
+/* ---- Book news signup ---- */
+.news-section {
+  background: var(--dark-mid);
+  border-top: 1px solid rgba(255,166,166,0.25);
+  border-bottom: 1px solid rgba(255,166,166,0.25);
+}
+
+.news-inner {
+  max-width: 720px;
+  text-align: center;
+}
+
+.news-inner h2 { margin: 0.25rem 0 1rem; }
+
+.news-inner p {
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.news-form {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 1rem;
+  align-items: end;
+  text-align: left;
+}
+
+.news-form .btn { padding: 0.95rem 1.75rem; }
+
+.news-status {
+  font-size: 1.05rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--coral);
+  border-radius: 4px;
+  color: var(--coral);
+  text-align: left;
+}
+
+.news-status.err { border-color: #ff6b6b; color: #ff8a8a; }
+
+@media (max-width: 768px) {
+  .news-form { grid-template-columns: 1fr; }
+}
+
 /* ---- Contact form ---- */
 .contact-section {
   background: var(--dark);

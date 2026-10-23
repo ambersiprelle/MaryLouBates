@@ -41,3 +41,22 @@ if (formEl && contactStatus === 'ok') {
   note.textContent = 'Sorry, something went wrong sending your message. Please try again.';
   formEl.parentNode.insertBefore(note, formEl);
 }
+
+// Book news signup — server redirects with ?news=check|already|confirmed|unsubscribed|err
+const newsStatus = params.get('news');
+const newsForm = document.querySelector('.news-form');
+const newsMessages = {
+  check: "Almost done &mdash; please check your email and click the link to confirm. (If you don't see it, look in spam or promotions.)",
+  already: "You're already on the list. Thank you &mdash; I'll be in touch when there's news.",
+  confirmed: "Thank you! You're on the list. I'll write when there's news about the book.",
+  unsubscribed: "You've been unsubscribed. You won't get any more book news from me.",
+  err: "Sorry, that didn't go through. Please check your email address and try again."
+};
+if (newsForm && newsMessages[newsStatus]) {
+  const box = document.createElement('p');
+  box.className = 'news-status' + (newsStatus === 'err' ? ' err' : '');
+  box.setAttribute('role', 'status');
+  box.innerHTML = newsMessages[newsStatus];
+  if (newsStatus === 'err') newsForm.parentNode.insertBefore(box, newsForm);
+  else newsForm.replaceWith(box);
+}
