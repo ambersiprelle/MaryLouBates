@@ -51,26 +51,33 @@ let private now () = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
 let private newToken () =
     Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant()
 
-/// Add or refresh a signup and return (token, status). A confirmed subscriber
-/// stays confirmed; an unsubscribed one goes back to pending so they must confirm again.
-let upsertPending (email: string) (name: string) (source: string) : string * string =
+/// Add a signup straight onto the list (no confirmation step). Returns true when the
+/// address was not already subscribed, so the caller knows whether to notify Mary Lou.
+let subscribe (email: string) (name: string) (source: string) : bool =
     use conn = openConn ()
+    use check = conn.CreateCommand()
+    check.CommandText <- "SELECT status FROM subscribers WHERE email = $email"
+    check.Parameters.AddWithValue("$email", email.Trim().ToLowerInvariant()) |> ignore
+    let wasConfirmed =
+        match check.ExecuteScalar() with
+        | :? string as st -> st = "confirmed"
+        | _ -> false
     use cmd = conn.CreateCommand()
     cmd.CommandText <- """
-        INSERT INTO subscribers (email, name, token, status, source, created_at)
-        VALUES ($email, $name, $token, 'pending', $source, $now)
+        INSERT INTO subscribers (email, name, token, status, source, created_at, confirmed_at)
+        VALUES ($email, $name, $token, 'confirmed', $source, $now, $now)
         ON CONFLICT(email) DO UPDATE SET
             name = CASE WHEN excluded.name <> '' THEN excluded.name ELSE subscribers.name END,
-            status = CASE WHEN subscribers.status = 'confirmed' THEN 'confirmed' ELSE 'pending' END;
-        SELECT token, status FROM subscribers WHERE email = $email;
+            status = 'confirmed',
+            confirmed_at = CASE WHEN subscribers.confirmed_at = '' THEN excluded.confirmed_at ELSE subscribers.confirmed_at END
     """
     cmd.Parameters.AddWithValue("$email", email.Trim().ToLowerInvariant()) |> ignore
     cmd.Parameters.AddWithValue("$name", name.Trim()) |> ignore
     cmd.Parameters.AddWithValue("$token", newToken ()) |> ignore
     cmd.Parameters.AddWithValue("$source", source) |> ignore
     cmd.Parameters.AddWithValue("$now", now ()) |> ignore
-    use r = cmd.ExecuteReader()
-    if r.Read() then (r.GetString(0), r.GetString(1)) else ("", "")
+    cmd.ExecuteNonQuery() |> ignore
+    not wasConfirmed
 
 /// Set a subscriber's status by token. Returns their (email, name) if the token matched.
 let private setStatus (token: string) (status: string) : (string * string) option =

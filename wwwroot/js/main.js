@@ -42,11 +42,10 @@ if (formEl && contactStatus === 'ok') {
   formEl.parentNode.insertBefore(note, formEl);
 }
 
-// Book news signup — server redirects with ?news=check|already|confirmed|unsubscribed|err
+// Book news signup — server redirects with ?news=confirmed|already|unsubscribed|err
 const newsStatus = params.get('news');
 const newsForm = document.querySelector('.news-form');
 const newsMessages = {
-  check: "Almost done &mdash; please check your email and click the link to confirm. (If you don't see it, look in spam or promotions.)",
   already: "You're already on the list. Thank you &mdash; I'll be in touch when there's news.",
   confirmed: "Thank you! You're on the list. I'll write when there's news about the book.",
   unsubscribed: "You've been unsubscribed. You won't get any more book news from me.",

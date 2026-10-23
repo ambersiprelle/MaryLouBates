@@ -106,7 +106,19 @@ let private isPlausibleEmail (email: string) =
 let private emailShell (inner: string) =
     sprintf "<div style=\"font-family:Georgia,serif;font-size:16px;line-height:1.6;color:#333;max-width:560px;\">%s</div>" inner
 
-/// POST /subscribe — store a pending signup and email a confirmation link.
+let private notifyNewReader (config: ProductConfig) (email: string) (name: string) =
+    task {
+        let html =
+            emailShell (
+                sprintf "<p><strong>%s</strong> &lt;%s&gt; signed up for news about your book on maryloubates.com.</p>"
+                    (htmlEncode (if String.IsNullOrWhiteSpace name then "(no name)" else name.Trim())) (htmlEncode email))
+        let! result = sendEmail config config.ContactToEmail email "New reader signed up for book news" html
+        match result with
+        | Error err -> eprintfn "[subscribe] owner notice failed: %s" err
+        | Ok () -> ()
+    }
+
+/// POST /subscribe — add the reader straight to the list and tell Mary Lou.
 let subscribeHandler (config: ProductConfig) : HttpHandler =
     fun ctx ->
         task {
@@ -117,30 +129,20 @@ let subscribeHandler (config: ProductConfig) : HttpHandler =
             let honeypot = form.GetString("website", "")
 
             if not (String.IsNullOrEmpty honeypot) then
-                return! redirectTo "/?news=check#news" ctx
+                return! redirectTo "/?news=confirmed#news" ctx
             elif not (isPlausibleEmail email) then
                 return! redirectTo "/?news=err#news" ctx
             else
-                let token, status = Db.upsertPending email name source
-                if status = "confirmed" then
-                    return! redirectTo "/?news=already#news" ctx
+                if Db.subscribe email name source then
+                    printfn "[subscribe] added %s (source: %s)" email source
+                    do! notifyNewReader config email name
+                    return! redirectTo "/?news=confirmed#news" ctx
                 else
-                    let link = sprintf "%s/subscribe/confirm?t=%s" config.SiteUrl token
-                    let unsub = sprintf "%s/unsubscribe?t=%s" config.SiteUrl token
-                    let greeting = if String.IsNullOrWhiteSpace name then "Hello," else sprintf "Hello %s," (htmlEncode (name.Trim()))
-                    let html =
-                        emailShell (
-                            sprintf "<p>%s</p><p>Thank you for asking to hear about my book. Please click below to confirm, and I'll let you know when it's coming out.</p><p><a href=\"%s\" style=\"display:inline-block;background:#ffa6a6;color:#000;font-weight:bold;padding:10px 20px;border-radius:4px;text-decoration:none;\">Yes, keep me posted</a></p><p>If you didn't sign up, just ignore this email and you won't hear from me.</p><p>Mary Lou</p><p style=\"font-size:12px;color:#888;\">maryloubates.com &middot; <a href=\"%s\" style=\"color:#888;\">Unsubscribe</a></p>"
-                                greeting link unsub)
-                    let! result = sendEmail config email config.ContactToEmail "Please confirm: news about Mary Lou Bates's book" html
-                    match result with
-                    | Ok () -> return! redirectTo "/?news=check#news" ctx
-                    | Error err ->
-                        eprintfn "[subscribe] confirmation send failed for %s: %s" email err
-                        return! redirectTo "/?news=err#news" ctx
+                    return! redirectTo "/?news=already#news" ctx
         }
 
-/// GET /subscribe/confirm?t=... — confirm a signup and tell Mary Lou.
+/// GET /subscribe/confirm?t=... — left over from the double opt-in version; still honours
+/// any confirm links already sent.
 let confirmHandler (config: ProductConfig) : HttpHandler =
     fun ctx ->
         task {
@@ -148,14 +150,7 @@ let confirmHandler (config: ProductConfig) : HttpHandler =
             match (if token = "" then None else Db.confirm token) with
             | Some (email, name) ->
                 printfn "[subscribe] confirmed %s" email
-                let html =
-                    emailShell (
-                        sprintf "<p><strong>%s</strong> &lt;%s&gt; signed up for news about your book on maryloubates.com.</p>"
-                            (htmlEncode (if name = "" then "(no name)" else name)) (htmlEncode email))
-                let! result = sendEmail config config.ContactToEmail email "New reader signed up for book news" html
-                match result with
-                | Error err -> eprintfn "[subscribe] owner notice failed: %s" err
-                | Ok () -> ()
+                do! notifyNewReader config email name
                 return! redirectTo "/?news=confirmed#news" ctx
             | None -> return! redirectTo "/?news=err#news" ctx
         }
