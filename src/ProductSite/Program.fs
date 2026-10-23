@@ -1,6 +1,9 @@
 module ChiAha.ProductSite.Program
 
+open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
 open Falco
 open Falco.Routing
 open ChiAha.ProductSite.Configuration
@@ -14,6 +17,15 @@ let main args =
 
     let builder = WebApplication.CreateBuilder(args)
     let app = builder.Build()
+
+    // One address for search engines: www.maryloubates.com -> maryloubates.com
+    app.Use(fun (ctx: HttpContext) (next: RequestDelegate) ->
+        if ctx.Request.Host.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) then
+            let target = sprintf "https://%s%s%s" (ctx.Request.Host.Host.Substring 4) (string ctx.Request.Path) (string ctx.Request.QueryString)
+            ctx.Response.StatusCode <- 301
+            ctx.Response.Headers.Location <- target
+            Task.CompletedTask
+        else next.Invoke ctx) |> ignore
 
     app.UseDefaultFiles() |> ignore
     app.UseStaticFiles() |> ignore

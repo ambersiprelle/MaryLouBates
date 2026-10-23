@@ -17,6 +17,8 @@ Personal/bio site for Mary Lou Bates — author, rose enthusiast, Antarctic memo
 
 ## SEO Status
 Full sweep done: robots.txt, sitemap.xml (4 URLs), OG + Twitter tags, canonicals, **Person** JSON-LD on homepage (not Organization — this is a bio site).
+10/23: www → apex 301 (Program.fs); Article JSON-LD on both rose-annual pages (author → `#person` on homepage); article titles lead with the article name; sitemap lastmod bumped (bump it whenever pages change).
+NOT done (needs Amber's logins): Google Search Console + Bing Webmaster for maryloubates.com — site was not appearing in search as of 10/23. Next content: a /book page once Mary Lou has a title.
 
 ## Notes
 - Custom domain `maryloubates.com` is live (Fly certs issued for apex + www); Resend domain verified 10/23 (key + domain in Amber's Resend account); every email sent is listed at resend.com/emails
