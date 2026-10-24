@@ -30,5 +30,6 @@ NOT done (needs Amber's logins): Google Search Console + Bing Webmaster for mary
   - `GET /unsubscribe?t=` one-click unsubscribe — put this link (per-subscriber token) in every news email
   - `GET /admin/subscribers.csv` — basic auth `admin` / `ADMIN_PASSWORD` secret; 404 until that secret is set
   - Page shows `?news=confirmed|already|unsubscribed|err` messages (js/main.js)
+- **Bot defence** (`Spam.fs`, 10/24, after bot contact posts were triggering junk Resend mail): both forms need the honeypot empty, a signed `ft` token fetched by js/main.js from `GET /form-token`, ≥3 s since page load, ≤3 forms per IP per hour, and (contact) no links. Dropped posts get the normal thank-you redirect and send nothing; `fly logs` shows `[spam] dropped ... : <reason>`. If junk continues, next step is Cloudflare Turnstile.
 - Personal site: do NOT route signups through the ChiAha gateway proxy / ActiveCampaign
 - Rose Annual article pages contain recreated text; original published words not yet substituted

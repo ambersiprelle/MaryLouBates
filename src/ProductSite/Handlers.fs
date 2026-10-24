@@ -124,13 +124,14 @@ let contactHandler (config: ProductConfig) : HttpHandler =
             let name = form.GetString("name", "")
             let email = form.GetString("email", "")
             let message = form.GetString("message", "")
-            let honeypot = form.GetString("website", "")
 
-            if not (String.IsNullOrEmpty honeypot) then
+            match Spam.blockReason config ctx form message with
+            | Some reason ->
+                printfn "[spam] dropped contact from %s (%s): %s" (Spam.clientIp ctx) email reason
                 return! redirectTo "/?contact=ok#contact" ctx
-            elif String.IsNullOrWhiteSpace email then
+            | None when String.IsNullOrWhiteSpace email ->
                 return! redirectTo "/?contact=err#contact" ctx
-            else
+            | None ->
                 let! result = sendViaResend config name email message
                 match result with
                 | Ok () ->
@@ -161,13 +162,14 @@ let subscribeHandler (config: ProductConfig) : HttpHandler =
             let name = form.GetString("name", "")
             let email = form.GetString("email", "").Trim()
             let source = form.GetString("source", "site")
-            let honeypot = form.GetString("website", "")
 
-            if not (String.IsNullOrEmpty honeypot) then
+            match Spam.blockReason config ctx form "" with
+            | Some reason ->
+                printfn "[spam] dropped signup from %s (%s): %s" (Spam.clientIp ctx) email reason
                 return! redirectTo "/?news=confirmed#news" ctx
-            elif not (isPlausibleEmail email) then
+            | None when not (isPlausibleEmail email) ->
                 return! redirectTo "/?news=err#news" ctx
-            else
+            | None ->
                 let isNew, token = Db.subscribe email name source
                 if isNew then
                     printfn "[subscribe] added %s (source: %s)" email source
@@ -223,3 +225,9 @@ let subscribersCsvHandler (config: ProductConfig) : HttpHandler =
             ctx.Response.ContentType <- "text/csv; charset=utf-8"
             ctx.Response.Headers.Append("Content-Disposition", "attachment; filename=subscribers.csv")
             Response.ofString Encoding.UTF8 csv ctx
+
+/// GET /form-token — signed page-load timestamp the forms must send back (see Spam.fs).
+let formTokenHandler (config: ProductConfig) : HttpHandler =
+    fun ctx ->
+        ctx.Response.Headers.CacheControl <- "no-store"
+        Response.ofPlainText (Spam.issueToken config) ctx

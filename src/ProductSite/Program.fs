@@ -35,6 +35,7 @@ let main args =
         [
             get "/health" healthCheck
             post "/contact" (contactHandler config)
+            get "/form-token" (formTokenHandler config)
             post "/subscribe" (subscribeHandler config)
             get "/subscribe/confirm" (confirmHandler config)
             get "/unsubscribe" unsubscribeHandler

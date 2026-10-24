@@ -59,3 +59,16 @@ if (newsForm && newsMessages[newsStatus]) {
   if (newsStatus === 'err') newsForm.parentNode.insertBefore(box, newsForm);
   else newsForm.replaceWith(box);
 }
+
+// Bot check: forms must carry a signed page-load token from the server (see Spam.fs).
+function loadFormToken() {
+  fetch('/form-token', { cache: 'no-store' })
+    .then(r => r.ok ? r.text() : '')
+    .then(t => document.querySelectorAll('input[name="ft"]').forEach(i => { i.value = t; }))
+    .catch(() => {});
+}
+if (document.querySelector('input[name="ft"]')) {
+  loadFormToken();
+  // Refresh the token for anyone who leaves the page open overnight.
+  setInterval(loadFormToken, 6 * 60 * 60 * 1000);
+}
