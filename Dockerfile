@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 COPY src/ProductSite/*.fsproj ./src/ProductSite/
 RUN dotnet restore src/ProductSite/ProductSite.fsproj
 COPY src/ProductSite/ ./src/ProductSite/
 RUN dotnet publish src/ProductSite/ProductSite.fsproj -c Release -o /out
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /out .
 
