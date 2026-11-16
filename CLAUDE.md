@@ -12,12 +12,13 @@ Personal/bio site for Mary Lou Bates — author, rose enthusiast, Antarctic memo
 - **Deploy:** `fly deploy` (direct, no CI)
 - **Fly org:** personal
 - **Region:** iad
-- **Pages:** 4 (index, timeline, 2009-american-rose-annual, 2015-american-rose-annual)
+- **Pages:** 5 (index, timeline, 2009-american-rose-annual, 2015-american-rose-annual, faq) + privacy (noindex)
 - **Assets:** `wwwroot/` contains all HTML, css/, js/, images/, robots.txt, sitemap.xml
 
 ## SEO Status
-Full sweep done: robots.txt, sitemap.xml (4 URLs), OG + Twitter tags, canonicals, **Person** JSON-LD on homepage (not Organization — this is a bio site).
+Full sweep done: robots.txt, sitemap.xml (5 URLs), OG + Twitter tags, canonicals, **Person** JSON-LD on homepage (not Organization — this is a bio site).
 10/23: www → apex 301 (Program.fs); Article JSON-LD on both rose-annual pages (author → `#person` on homepage); article titles lead with the article name; sitemap lastmod bumped (bump it whenever pages change).
+11/16: faq.html (8 Q&As + FAQPage JSON-LD, footer link "Questions" on every page, in sitemap + llms.txt); direct-answer opening line in the home About text; Person knowsAbout.
 NOT done (needs Amber's logins): Google Search Console + Bing Webmaster for maryloubates.com — site was not appearing in search as of 10/23. Next content: a /book page once Mary Lou has a title.
 
 ## Notes
